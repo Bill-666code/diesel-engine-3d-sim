@@ -1,16 +1,28 @@
 # 四冲程柴油机高精度 3D 交互仿真系统
 
+**在线体验（GitHub Pages）：** ▶ https://bill-666code.github.io/diesel-engine-3d-sim/
+点击链接即可直接游玩，无需安装。仓库：https://github.com/Bill-666code/diesel-engine-3d-sim
+
+![界面总览](shots/ui_full.png)
+
 基于 **Three.js (WebGL2)** 的纯前端四冲程直列四缸涡轮增压柴油机仿真：全尺寸参数化建模、精确的曲柄连杆与配气运动学、
 三路流体（机油 / 冷却液 / 空气）流动可视化、PBR 材质、剖视与拆解模式、鼠标悬停零件信息卡。
 
-> 无需构建、无需联网：`vendor/three.module.js` 已随包提供，双击方式不行时用任意静态服务器打开即可。
+> 无需构建、无需联网：`vendor/three.module.js` 已随包提供。本地预览需用静态服务器（ES Module 不支持 `file://`）。
+
+![半透明剖视](shots/ghost_side_view.png)
 
 ---
 
 ## 一、快速开始
 
+**方式一：在线** —— 直接打开 <https://bill-666code.github.io/diesel-engine-3d-sim/>
+
+**方式二：本地**
+
 ```bash
-cd diesel-sim
+git clone https://github.com/Bill-666code/diesel-engine-3d-sim.git
+cd diesel-engine-3d-sim
 python3 -m http.server 8080      # 或 npx serve / php -S localhost:8080
 # 浏览器打开 http://localhost:8080/index.html
 ```
@@ -24,8 +36,10 @@ python3 -m http.server 8080      # 或 npx serve / php -S localhost:8080
 嵌入式使用：
 
 ```html
-<iframe src="./index.html" style="width:100%;height:100%;border:0"></iframe>
+<iframe src="https://bill-666code.github.io/diesel-engine-3d-sim/" style="width:100%;height:100%;border:0"></iframe>
 ```
+
+![拆解视图](shots/explode_view.png)
 
 ---
 
