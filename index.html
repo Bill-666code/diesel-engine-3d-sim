@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>四冲程柴油机 3D 交互仿真系统</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='%23ffb03a'/%3E%3Ccircle cx='16' cy='16' r='6' fill='%23151a20'/%3E%3C/svg%3E" />
+<link rel="stylesheet" href="./styles.css" />
+<script type="importmap">
+{ "imports": { "three": "./vendor/three.module.js" } }
+</script>
+</head>
+<body>
+<div id="app">
+  <div id="viewport"></div>
+
+  <!-- 标题 -->
+  <header id="titlebar">
+    <div class="t-main">四冲程柴油机 · 3D 交互仿真</div>
+    <div class="t-sub">FOUR-STROKE DIESEL ENGINE · INTERACTIVE 3D SIMULATOR</div>
+    <div class="t-spec" id="titleSpec"></div>
+  </header>
+
+  <!-- 状态面板 -->
+  <section id="status" class="panel">
+    <div class="panel-hd">
+      <span>运行状态 <em>Status</em></span>
+      <span id="fpsBadge" class="badge">-- fps</span>
+    </div>
+    <div class="cycle-wrap">
+      <svg id="cycleSvg" viewBox="0 0 120 120" width="120" height="120"></svg>
+      <div class="cyl-list" id="cylList"></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><label>曲轴转角</label><b id="roAngle">0°</b><i>Crank angle</i></div>
+      <div class="ro"><label>当前冲程</label><b id="roStroke">做功</b><i>Stroke</i></div>
+      <div class="ro"><label>转速</label><b id="roRpm">0</b><i>r/min</i></div>
+      <div class="ro"><label>负荷</label><b id="roLoad">0</b><i>%</i></div>
+      <div class="ro"><label>缸内压力</label><b id="roPress">0</b><i>bar</i></div>
+      <div class="ro"><label>缸内温度</label><b id="roTemp">0</b><i>℃</i></div>
+      <div class="ro"><label>机油压力</label><b id="roOilP">0.0</b><i>bar</i></div>
+      <div class="ro"><label>机油温度</label><b id="roOilT">0</b><i>℃</i></div>
+      <div class="ro"><label>冷却液温度</label><b id="roCool">0</b><i>℃</i></div>
+      <div class="ro"><label>增压压力</label><b id="roBoost">0</b><i>kPa</i></div>
+      <div class="ro"><label>排气温度</label><b id="roExhT">0</b><i>℃</i></div>
+      <div class="ro"><label>功率</label><b id="roPower">0</b><i>kW</i></div>
+      <div class="ro"><label>扭矩</label><b id="roTorque">0</b><i>N·m</i></div>
+      <div class="ro"><label>机油流量</label><b id="roOilF">0</b><i>L/min</i></div>
+      <div class="ro"><label>冷却液流量</label><b id="roCoolF">0</b><i>L/min</i></div>
+      <div class="ro"><label>燃油消耗</label><b id="roFuel">0</b><i>L/h</i></div>
+    </div>
+  </section>
+
+  <!-- 控制面板 -->
+  <section id="controls" class="panel">
+    <div class="panel-hd"><span>操作控制 <em>Controls</em></span>
+      <button id="btnCollapse" class="mini">－</button>
+    </div>
+    <div id="controlsBody">
+      <div class="row btns">
+        <button id="btnRun" class="btn primary">⏸ 停机</button>
+        <button id="btnReset" class="btn">↺ 复位</button>
+      </div>
+      <label class="slider">转速 <span id="lbRpm">800 r/min</span>
+        <input id="sldRpm" type="range" min="0" max="4200" step="10" value="800" />
+      </label>
+      <label class="slider">负荷 <span id="lbLoad">20 %</span>
+        <input id="sldLoad" type="range" min="0" max="100" step="1" value="20" />
+      </label>
+      <label class="slider">仿真倍速 <span id="lbSpeed">1.0×</span>
+        <input id="sldSpeed" type="range" min="0.05" max="3" step="0.05" value="1" />
+      </label>
+
+      <div class="grp">视角 <em>Views</em></div>
+      <div class="row wrap" id="viewBtns"></div>
+
+      <div class="grp">显示模式 <em>Display</em></div>
+      <div class="row wrap">
+        <button class="btn tog" id="btnGhost">半透明剖视</button>
+        <button class="btn tog" id="btnSection">剖切</button>
+        <button class="btn tog" id="btnSpin">自动旋转</button>
+      </div>
+      <label class="slider" id="clipWrap" hidden>剖切位置 <span id="lbClip">0 mm</span>
+        <input id="sldClip" type="range" min="-260" max="260" step="2" value="0" />
+      </label>
+      <label class="slider">拆解 <span id="lbExplode">0 %</span>
+        <input id="sldExplode" type="range" min="0" max="100" step="1" value="0" />
+      </label>
+
+      <div class="grp">流体显示 <em>Fluids</em></div>
+      <div class="row wrap">
+        <button class="btn tog on" data-fluid="oil">润滑油</button>
+        <button class="btn tog on" data-fluid="coolant">冷却液</button>
+        <button class="btn tog on" data-fluid="air">空气</button>
+      </div>
+
+      <div class="grp">总成显隐 <em>Assemblies</em></div>
+      <div class="row wrap" id="asmBtns"></div>
+
+      <div class="grp">图例 <em>Legend</em></div>
+      <div id="legend" class="legend"></div>
+    </div>
+  </section>
+
+  <!-- 悬浮信息卡 -->
+  <div id="card" class="card" hidden>
+    <div class="c-hd">
+      <div>
+        <div class="c-name" id="cName">—</div>
+        <div class="c-en" id="cEn">—</div>
+      </div>
+      <div class="c-group" id="cGroup">—</div>
+    </div>
+    <div class="c-state" id="cState">—</div>
+    <div class="c-row"><label>材料</label><span id="cMat">—</span></div>
+    <div class="c-row"><label>工艺</label><span id="cProc">—</span></div>
+    <div class="c-row c-fn"><label>功能</label><span id="cFn">—</span></div>
+    <div class="c-specs" id="cSpecs"></div>
+    <div class="c-foot" id="cFoot">左键旋转 · 滚轮缩放 · 右键平移 · 单击锁定 / Esc 取消</div>
+  </div>
+
+  <!-- 操作引导 -->
+  <div id="help" class="modal">
+    <div class="modal-in">
+      <h2>操作引导 <em>Quick Start</em></h2>
+      <div class="help-grid">
+        <div><b>视角</b><span>左键拖拽旋转，滚轮缩放，右键 / Shift+左键平移，触屏单指旋转、双指缩放。</span></div>
+        <div><b>零件查询</b><span>鼠标悬停在任意零件表面即弹出信息卡（名称/材料/工艺/功能/参数/实时状态），单击可锁定，Esc 取消。</span></div>
+        <div><b>运行控制</b><span>转速、负荷、仿真倍速滑块；空格键启停；四冲程按 吸气→压缩→做功→排气 循环演示。</span></div>
+        <div><b>观察内部</b><span>「半透明剖视」透视外壳与油道，「剖切」沿 Z 轴切开壳体，拖动剖切滑块可移动切面。</span></div>
+        <div><b>拆解视图</b><span>拖动「拆解」滑块，缸盖/缸体/油底壳/正时室/进排气等总成按爆炸图位移展开。</span></div>
+        <div><b>快捷键</b><span>1–7 视角预设 · C 剖切 · G 半透明 · F 流体 · Space 启停 · H 帮助。</span></div>
+      </div>
+      <button class="btn primary big" id="btnHelpClose">开始体验</button>
+    </div>
+  </div>
+
+  <div id="toast" class="toast" hidden></div>
+</div>
+<script type="module" src="./src/main.js"></script>
+</body>
+</html>
